@@ -1,0 +1,12 @@
+# Editable constraints template (optional).
+# Use to pin wheel-friendly versions or document platform markers.
+# Example pins (uncomment and adjust as needed):
+# numpy==2.0.1
+# pandas==2.2.2
+#
+# If a native dep like TA-Lib is present in your requirements.txt and fails on Windows,
+# prefer adding a platform marker in requirements.txt instead of trying to "exclude" via constraints:
+# ta-lib==0.4.28 ; sys_platform != 'win32'
+#
+# Then install with:
+#   pip install --prefer-binary --only-binary=:all: -c backend/constraints.txt -r backend/requirements.txt

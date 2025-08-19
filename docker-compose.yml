@@ -1,0 +1,192 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      REQUIRE_AUTH: "0"
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:4173"]'
+      CORS_ALLOW_HEADERS: '["Authorization","Content-Type"]'
+      CORS_ALLOW_METHODS: '["GET","POST","PUT","DELETE","OPTIONS"]'
+      EXCHANGE_BASE_URL: "https://example-exchange.invalid"
+      EXCHANGE_API_KEY: ""
+      EXCHANGE_API_SECRET: ""
+      DATABASE_URL: "postgresql://arbuser:arbpass@postgres:5432/arbdb"
+      # Alternatively, mount files and point to them (preferred for prod):
+      # EXCHANGE_API_KEY_FILE: "/run/secrets/exchange_api_key"
+      # EXCHANGE_API_SECRET_FILE: "/run/secrets/exchange_api_secret"
+    # Optional: mount local secret files (uncomment and provide files to use *_FILE envs above)
+    # - ./secrets/exchange_api_key.txt:/run/secrets/exchange_api_key:ro
+    # - ./secrets/exchange_api_secret.txt:/run/secrets/exchange_api_secret:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      VITE_API_URL: "http://backend:3000/api"
+      VITE_DISABLE_WS: "0"
+    command: sh -c "npm ci && npm run build && npm run preview -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    command: --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - backend
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    command: --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager --config.expand-env
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - SLACK_CHANNEL=${SLACK_CHANNEL:-#alerts}
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL}
+    depends_on:
+      - prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-arbdb}
+      POSTGRES_USER: ${POSTGRES_USER:-arbuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arbpass}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:
+  pg_data:
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

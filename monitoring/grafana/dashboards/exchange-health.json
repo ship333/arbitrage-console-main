@@ -1,0 +1,74 @@
+{
+  "id": null,
+  "uid": "exchange-health",
+  "title": "Exchange Health",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Circuit open",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        { "expr": "max(exchange_circuit_breaker_open)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Exchange requests by status (rate)",
+      "gridPos": {"x": 6, "y": 0, "w": 18, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(exchange_requests_total[5m]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Exchange requests by operation & status (rate)",
+      "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (operation, status) (rate(exchange_requests_total[5m]))",
+          "legendFormat": "{{operation}} {{status}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Retries (5m)",
+      "gridPos": {"x": 0, "y": 16, "w": 8, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(exchange_requests_total{status=\"retry\"}[5m]))",
+          "legendFormat": "retries"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Failures (5m)",
+      "gridPos": {"x": 8, "y": 16, "w": 8, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(exchange_requests_total{status=\"failed\"}[5m]))",
+          "legendFormat": "failed"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Circuit-open denials (5m)",
+      "gridPos": {"x": 16, "y": 16, "w": 8, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(exchange_requests_total{status=\"circuit_open\"}[5m]))",
+          "legendFormat": "denied"
+        }
+      ]
+    }
+  ]
+}

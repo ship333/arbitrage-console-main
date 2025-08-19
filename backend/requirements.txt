@@ -1,0 +1,21 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.8.2
+pydantic-settings==2.4.0
+python-dotenv==1.0.1
+
+# metrics
+prometheus-client==0.20.0
+
+# http client and testing
+httpx==0.27.0
+pytest==8.3.2
+pytest-asyncio==0.23.8
+ 
+# postgres (optional)
+psycopg[binary]==3.1.18
+psycopg-pool==3.2.1
+
+# backtesting deps (hyperliquid adapter)
+numpy==2.0.1
+pandas==2.2.2

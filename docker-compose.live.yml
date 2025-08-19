@@ -1,0 +1,46 @@
+services:
+  backend:
+    environment:
+      HLIQ_BOT_PATH: "/hliqbot"
+      HLIQ_NODE_NDJSON_DIR: "data"
+      HLIQ_NODE_COLLECTOR: "0"  # disable internal spawn; we run collector as its own container
+      # Allow containerized hyperliquid UI on 5174 (in addition to defaults)
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:4173","http://localhost:5174"]'
+    volumes:
+      - "C:/Users/16782/CascadeProjects/hyperliquid_bot:/hliqbot:ro"
+
+  hliqnode:
+    image: node:20-alpine
+    working_dir: /hliqbot
+    command: sh -c "npm ci || npm install && npm run -s live:collect"
+    environment:
+      LIVE_TRIGGER_MODE: "poll"
+      # Optional: set these if you want block-triggered streaming instead of poll
+      # ALCHEMY_WS_URL: "wss://..."
+      # ALCHEMY_WS_HEADS: "true"
+    volumes:
+      - "C:/Users/16782/CascadeProjects/hyperliquid_bot:/hliqbot"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /hliqbot/data/ws_status.json || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  hliq-ui:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci || npm install && npm run dev -- --host 0.0.0.0 --port 5174"
+    environment:
+      VITE_API_BASE: ""
+      VITE_PROXY_TARGET: "http://backend:3000"
+      VITE_DISABLE_WS: "0"
+      VITE_LIVE_WS_PATH: "/api/ws?topic=all"
+      # VITE_WS_TOKEN: ""  # set if backend auth is enabled
+    volumes:
+      - "C:/Users/16782/CascadeProjects/hyperliquid_bot/frontend:/app"
+    ports:
+      - "5174:5174"
+    depends_on:
+      backend:
+        condition: service_healthy

@@ -1,0 +1,66 @@
+groups:
+  - name: backend-alerts
+    interval: 15s
+    rules:
+      - alert: BackendHigh5xxRate
+        expr: sum(rate(http_requests_total{job="backend",status=~"5.."}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High 5xx rate on backend
+          description: "5xx rate > 0.1 req/s for 5m"
+
+      - alert: BackendHigh5xxErrorRatio
+        expr: (sum(rate(http_requests_total{job="backend",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m]))) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: High 5xx error ratio on backend
+          description: ">5% of requests are 5xx over 10m"
+
+      - alert: Backend429Spike
+        expr: sum(rate(http_requests_total{job="backend",status="429"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Excessive 429 responses (rate limiting)
+          description: "HTTP 429 rate > 0.2 req/s over 5m"
+
+      - alert: ExchangeCircuitOpen
+        expr: exchange_circuit_breaker_open > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Exchange circuit breaker is open
+          description: Circuit breaker has been open for >2m
+
+      - alert: KillSwitchEnabled
+        expr: kill_switch_enabled > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Kill switch is engaged
+          description: Kill switch enabled for >1m
+
+      - alert: BackendScrapeFailed
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Prometheus scrape failed for backend
+          description: Prometheus cannot scrape /metrics on backend for >2m
+
+      - alert: BotPnLTooNegative
+        expr: bot_pnl_usd < -1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Bot PnL too negative
+          description: bot_pnl_usd < -1000 for 5m (tune threshold later)
